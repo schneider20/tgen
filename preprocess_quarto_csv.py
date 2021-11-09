@@ -21,6 +21,7 @@ def process_quarto():
     if os.path.isfile(OUT_DIR + BOTH_OUT):
         os.remove(OUT_DIR + BOTH_OUT)
 
+    first_time = True   # Boolean flag: if True, add the headers to each file.  Otherwise just write content
     for i in range(1, NUM_CSV + 1):
         file_name = CSV_DIR + f'Quarto_dialog{i}.csv'
         try:
@@ -29,22 +30,23 @@ def process_quarto():
             queries_mr = data[[FSQ_COL]]
             queries_ref = data[[NLQ_COL]]
 
-            queries_both.rename(columns={NLQ_COL: 'ref', FSQ_COL: 'mr'})
-            queries_ref.rename(columns={NLQ_COL: 'ref'})
-            queries_ref.rename(columns={FSQ_COL: 'mr'})
+            # queries_both.rename(columns={NLQ_COL: 'ref', FSQ_COL: 'mr'})
+            # queries_ref.rename(columns={NLQ_COL: 'ref'})
+            # queries_ref.rename(columns={FSQ_COL: 'mr'})
 
             queries_both.to_csv(OUT_DIR + BOTH_OUT,
                                 mode='a',
                                 index=False,
-                                header=False)
+                                header=['mr', 'ref'] if first_time else False)
             queries_ref.to_csv(OUT_DIR + REF_OUT,
                                mode='a',
                                index=False,
-                               header=False)
+                               header=['ref'] if first_time else False)
             queries_mr.to_csv(OUT_DIR + MR_OUT,
                               mode='a',
                               index=False,
-                              header=False)
+                              header=['mr'] if first_time else False)
+            first_time = False
         except FileNotFoundError:
             print(f"File not found {file_name}")
 
