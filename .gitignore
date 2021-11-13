@@ -9,4 +9,8 @@
 .*.swp
 *.backup
 */input
+e2e-dataset/
+e2e_config.yaml
+e2e_convert.py
+quarto/
 
