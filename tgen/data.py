@@ -66,8 +66,11 @@ class DAI(object):
 
     @staticmethod
     def parse(dai_text):
+        # This line is supposed to break it into something along the lines of
+        # da_type = 'inform', svp = 'name='The Vaults'
         da_type, svp = dai_text[:-1].split('(', 1)
 
+        # I think this would be able to handle something like 'Start' and 'Finish' and 'RequestNewWinCondition'
         if not svp:  # no slot + value (e.g. 'hello()')
             return DAI(da_type)
 
@@ -192,10 +195,49 @@ class DA(object):
         """Parse a Diligent-style flat MR (E2E NLG dataset) string into a DA object."""
         da = DA()
 
-        for dai_text in re.finditer(r'([a-z_A-Z]+)\[([^\]]*)\]', da_text):
+        '''
+            Regular expression for our Quarto Corpus MRs:
+            r'^.+\(.*\)'
+            
+            Pretty much just starts with <characters>, and ends with (), where there can be something or nothing
+            contained within the parenthesis.  This can be updated/refined as we see necessary.
+            
+            r'(^[a-z|A-Z|,| ]+)(\(.*\))'
+            Want to capture two groups to use the .groups() feature.  First find everything prior to the first '('
+            and then just capture whatever is in between the ( and ) for now.  We'll probably have to parse this out
+            some time later.
+        '''
+        reg_exp = r'(^[a-z|A-Z|,| ]+)(\(.*\))'
+        # Old Regex: r'([a-z_A-Z]+)\[([^\]]*)\]'
+        for dai_text in re.finditer(r'(^[a-z|A-Z|,| ]+)(\(.*\))', da_text):
+            # name[The Vaults], eatType[pub], priceRange[more than £30], customer rating[5 out of 5], near[Café Adriatic]
+
+            # dai_text.groups() captures 'name', "The Vaults" on the first pass in .groups()
             slot, value = dai_text.groups()
-            slot = re.sub(r'([A-Z])', r'_\1', slot).lower()
-            da.append(DAI('inform', slot, value if value else None))
+
+            # In our case, value will be the value contained within the parenthesis.  If it's empty, we should
+            # just return None
+            if value.strip('(').strip(')') == '':
+                value = None
+
+            # In our Quarto Dataset specifically, we can have different settings (common ones are Same,
+            # and Context Switch.  These are delimited by commas, and there is a context function associated
+            # with them
+            slot = slot.lower()
+            if ',' in slot:
+                slot = slot.split(',')
+                slot = [elem.strip().lower() for elem in slot]  # Remove any whitespace from split slots
+
+            # This sub line essentially converts the name from camelCase to snake_case
+            # slot = re.sub(r'([A-Z])', r'_\1', slot).lower()
+            if isinstance(slot, list):
+                for elem in slot:
+                    # For now, let's see if we can just ignore the 'Same' and 'Context Switch' portions
+                    if elem != 'same' and elem != 'context switch':
+                        da.append(DAI('inform', elem, value if value else None))
+            else:
+                da.append(DAI('inform', slot, value if value else None))
+                # da.append(DAI('inform', slot, value if value else None))
 
         return da
 
