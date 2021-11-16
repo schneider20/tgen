@@ -67,7 +67,11 @@ class DAI(object):
     @staticmethod
     def parse(dai_text):
         # This line is supposed to break it into something along the lines of
-        # da_type = 'inform', svp = 'name='The Vaults'
+        # da_type = 'inform', svp = 'name=\'The Vaults\'
+        '''
+            So for us, we would still want to 'inform', but our svp would be something like 'start'
+
+        '''
         da_type, svp = dai_text[:-1].split('(', 1)
 
         # I think this would be able to handle something like 'Start' and 'Finish' and 'RequestNewWinCondition'
@@ -77,6 +81,12 @@ class DAI(object):
         if '=' not in svp:  # no value (e.g. 'request(to_stop)')
             return DAI(da_type, svp)
 
+        # First time we reach this is on the Quarto MR:
+        # "Same , Confirm(User_ID=1, Color)", Is this a win due to the color of the pieces?
+        '''
+            We parse out slot: 'confirm', value: '\'(User_ID=1, Color)\''
+            Then value has it's quotes removed so it becomes: '(User_ID=1, Color)'
+        '''
         slot, value = svp.split('=', 1)
         if value.endswith('"#'):  # remove special '#' characters in Bagel data (TODO treat right)
             value = value[:-1]

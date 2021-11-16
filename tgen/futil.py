@@ -44,8 +44,11 @@ def read_das(da_file):
     das = []
     with file_stream(da_file) as fh:
         for line in fh:
-            da = DA.parse(line.strip())
-            das.append(da)
+            line = line.replace('\n', '')
+            # Only execute the normal process if the line is not ''.  Quarto corpus has a \n somewhere apparently.
+            if line:
+                da = DA.parse(line.strip())
+                das.append(da)
     return das
 
 
